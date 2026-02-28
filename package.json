@@ -1,0 +1,26 @@
+{
+  "name": "gemini-reverse-no-login",
+  "version": "1.0.0",
+  "description": "Reverse engineered Gemini API client - no login required",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "gemini": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node src/test.js"
+  },
+  "dependencies": {
+    "mime-types": "^3.0.2",
+    "node-fetch": "^3.3.2"
+  },
+  "keywords": [
+    "gemini",
+    "bard",
+    "google",
+    "ai",
+    "reverse"
+  ],
+  "license": "MIT"
+}

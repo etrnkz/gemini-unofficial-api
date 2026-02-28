@@ -1,0 +1,79 @@
+<p align="center">
+  <img src="media/banner.svg" alt="Gemini Reverse">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node 18+">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
+  <img src="https://img.shields.io/badge/dependencies-2-lightgrey" alt="2 deps">
+  <img src="https://img.shields.io/badge/status-active-success" alt="Active">
+  <img src="https://img.shields.io/badge/PRs-welcome-8A2BE2" alt="PRs Welcome">
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> •
+  <a href="docs/guide.md">Guide</a> •
+  <a href="docs/api.md">API</a> •
+  <a href="docs/protocol.md">Protocol</a>
+</p>
+
+---
+
+<p align="center">
+  <strong>Reverse-engineered Node.js client for Google Gemini</strong>
+  <br>
+  No login required for text — cookies unlock the full suite.
+  <br>
+  Two dependencies, one file, zero bloat.
+</p>
+
+---
+
+## Quick Start
+
+```sh
+npm install
+```
+
+```js
+import { GeminiClient } from './src/gemini.js';
+
+const gemini = new GeminiClient();
+const answer = await gemini.sendMessage('What is the capital of France?');
+console.log(answer);
+// The capital of France is Paris.
+```
+
+## At a Glance
+
+| Area | Methods | Auth |
+|------|---------|------|
+| Chat | `sendMessage`, `streamMessage` | none |
+| Files | `uploadFile`, `uploadBuffer` | none |
+| Video | `sendVideo`, `streamVideo` | cookie |
+| Chats | `listChats`, `readChat`, `deleteChat`, `renameChat`, `generateChatTitle` | cookie |
+| Gems | `listGems`, `createGem`, `updateGem`, `deleteGem` | cookie |
+| Memory | `listMemories`, `createMemory`, `updateMemory`, `deleteMemory`, `deleteAllMemories` | cookie |
+| Account | `listModels`, `getAccountStatus`, `getSettings`, `getUsageInfo`, `checkQuota` | cookie |
+| Research | `getDeepResearchCaps`, `deepResearchBootstrap` | cookie |
+| Media | `downloadFile`, `getFullSizeImage` | cookie |
+
+## Docs
+
+| | |
+|---|---|
+| <img src="media/icon.svg" width="18" align="center"> [Guide](docs/guide.md) | Step-by-step usage: guest mode, login, file/video ops, constructor options |
+| <img src="media/icon.svg" width="18" align="center"> [API Reference](docs/api.md) | Full docs for all 30+ methods with parameters and return types |
+| <img src="media/icon.svg" width="18" align="center"> [Protocol](docs/protocol.md) | How the reverse-engineered protocol works under the hood |
+
+## Project Layout
+
+```
+src/          Source code
+docs/         Documentation
+media/        Brand assets (SVG icon, banner)
+```
+
+## License
+
+MIT &copy; [etrnkz](https://github.com/etrnkz)
