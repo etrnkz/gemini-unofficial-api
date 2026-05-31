@@ -64,9 +64,6 @@ const buffer = await client.downloadFile('https://lh3.googleusercontent.com/...'
 ## Constructor options
 
 ```js
-// With cookie pre-set
+// Pre-set cookie on init
 const client = new GeminiClient({ cookie: '__Secure-1PSID=...' });
-
-// With HTTP proxy
-const client = new GeminiClient({ proxy: 'http://localhost:8080' });
 ```

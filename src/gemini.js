@@ -6,11 +6,10 @@ import mime from 'mime-types';
 import { BASE, UPLOAD_URL, UA, MODELS, parseWrb, findWrbResult } from './constants.js';
 
 export class GeminiClient {
-  constructor({ cookie, proxy } = {}) {
+  constructor({ cookie } = {}) {
     this.cookie = cookie || '';
     this.bl = null;
     this.reqId = Math.floor(Math.random() * 900000) + 100000;
-    this.proxy = proxy;
     this.pushId = null;
     this._atToken = null;
   }
