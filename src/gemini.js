@@ -6,12 +6,32 @@ import mime from 'mime-types';
 import { BASE, UPLOAD_URL, UA, MODELS, parseWrb, findWrbResult } from './constants.js';
 
 export class GeminiClient {
-  constructor({ cookie } = {}) {
+  constructor({ cookie, cookiesFile } = {}) {
     this.cookie = cookie || '';
     this.bl = null;
     this.reqId = Math.floor(Math.random() * 900000) + 100000;
     this.pushId = null;
     this._atToken = null;
+    if (!this.cookie && cookiesFile !== false) {
+      this._tryLoadCookies(cookiesFile || 'cookies.json');
+    }
+  }
+
+  _tryLoadCookies(file) {
+    try {
+      const resolved = path.resolve(file);
+      if (!fs.existsSync(resolved)) return;
+      const data = JSON.parse(fs.readFileSync(resolved, 'utf-8'));
+      if (data.cookie) {
+        this.cookie = data.cookie;
+      } else if (data['__Secure-1PSID']) {
+        const parts = [];
+        for (const [k, v] of Object.entries(data)) {
+          if (v) parts.push(`${k}=${v}`);
+        }
+        this.cookie = parts.join('; ');
+      }
+    } catch { }
   }
 
   get isLoggedIn() {
@@ -19,13 +39,14 @@ export class GeminiClient {
   }
 
   async init() {
-    const res = await fetch(`${BASE}/`, {
-      headers: {
-        'User-Agent': UA,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-    });
+    const headers = {
+      'User-Agent': UA,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
+    if (this.cookie) headers['Cookie'] = this.cookie;
+
+    const res = await fetch(`${BASE}/`, { headers });
 
     const rawCookies = res.headers.raw()['set-cookie'] || [];
     if (!this.cookie) {

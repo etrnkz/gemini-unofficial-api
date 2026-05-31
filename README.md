@@ -24,7 +24,7 @@
   <br>
   No login required for text — cookies unlock the full suite.
   <br>
-  Two dependencies, one file, zero bloat.
+  Drop a <code>cookies.json</code> and go. Two dependencies, zero bloat.
 </p>
 
 ---

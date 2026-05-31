@@ -48,10 +48,15 @@ try {
   console.log('Expected - guest mode:', e.message);
 }
 
-// Login from env var and test post-login features
+// Post-login features (auto-detected from cookies.json or COOKIE env var)
 if (process.env.COOKIE) {
-  console.log('\n=== Post-login features ===');
   await client.login(process.env.COOKIE);
+}
+if (client.cookie && !client.isLoggedIn) {
+  await client.init();
+}
+if (client.isLoggedIn) {
+  console.log('\n=== Post-login features ===');
   console.log('Logged in:', client.isLoggedIn);
 
   console.log('\n--- listModels ---');
@@ -123,8 +128,11 @@ if (process.env.COOKIE) {
     console.log('Memories:', memories.length);
   } catch (e) { console.log('Memories error:', e.message); }
 } else {
-  console.log('\n=== Post-login (skipped - set COOKIE env var) ===');
-  console.log('Usage: $env:COOKIE="__Secure-1PSID=..." node src/test.js');
+  console.log('\n=== Post-login (skipped) ===');
+  console.log('Set cookies via:');
+  console.log('  1. COOKIE env var: $env:COOKIE="__Secure-1PSID=..." node src/test.js');
+  console.log('  2. cookies.json: { "cookie": "__Secure-1PSID=...; __Secure-1PSIDTS=..." }');
+  console.log('  3. cookies.json: { "__Secure-1PSID": "...", "__Secure-1PSIDTS": "..." }');
 }
 
 console.log('\nDone!');

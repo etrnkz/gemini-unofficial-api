@@ -19,10 +19,33 @@ const models = await client.listModels();
 
 ## With cookies (advanced features)
 
+### Via cookies.json (auto-detected)
+
+Save `cookies.json` in the project root:
+
+```json
+{
+  "cookie": "__Secure-1PSID=...; __Secure-1PSIDTS=...; __Secure-ENID=..."
+}
+```
+
+Or using individual cookie fields:
+
+```json
+{
+  "__Secure-1PSID": "...",
+  "__Secure-1PSIDTS": "..."
+}
+```
+
+The client auto-detects it — no need to call `login()`:
+
 ```js
 const client = new GeminiClient();
-await client.login('__Secure-1PSID=...; __Secure-1PSIDTS=...');
+await client.init(); // loads cookies.json automatically
+```
 
+```js
 const chats = await client.listChats();
 const turns = await client.readChat(chats[0].cid);
 await client.deleteChat(chats[0].cid);
@@ -37,6 +60,13 @@ await client.createMemory('I prefer dark mode');
 const settings = await client.getSettings();
 const usage = await client.getUsageInfo();
 const quota = await client.checkQuota('flash');
+```
+
+### Via cookie string
+
+```js
+const client = new GeminiClient();
+await client.login('__Secure-1PSID=...; __Secure-1PSIDTS=...');
 ```
 
 Get cookies from `gemini.google.com` in Chrome DevTools > Application > Cookies.
@@ -66,4 +96,13 @@ const buffer = await client.downloadFile('https://lh3.googleusercontent.com/...'
 ```js
 // Pre-set cookie on init
 const client = new GeminiClient({ cookie: '__Secure-1PSID=...' });
+
+// Custom cookies file path (default: cookies.json)
+const client = new GeminiClient({ cookiesFile: 'secrets/cookies.json' });
+
+// Disable auto-load from cookies.json
+const client = new GeminiClient({ cookiesFile: false });
+
+// Disable all auto-detection (guest mode only)
+const client = new GeminiClient({ cookie: '', cookiesFile: false });
 ```

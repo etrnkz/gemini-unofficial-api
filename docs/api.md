@@ -45,9 +45,20 @@ Authenticate with Google cookies. Returns the client instance.
 
 Initialize session parameters (called automatically on first request). Called once to fetch `bl`, `pushId`, and `SNlM0e` token from the Gemini homepage.
 
+### Constructor options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `cookie` | `string` | `''` | Pre-set cookie string |
+| `cookiesFile` | `string\|false` | `'cookies.json'` | Auto-load cookies from JSON file (`false` to disable) |
+
+Auto-detected `cookies.json` supports two formats:
+- `{ "cookie": "__Secure-1PSID=...; __Secure-1PSIDTS=..." }` — full cookie string
+- `{ "__Secure-1PSID": "...", "__Secure-1PSIDTS": "..." }` — individual fields
+
 ### `cookie`
 
-Property containing the current cookie string. Set via constructor `{ cookie }` or `login()`.
+Property containing the current cookie string. Set via constructor, `cookiesFile`, or `login()`.
 
 ### `isLoggedIn`
 
