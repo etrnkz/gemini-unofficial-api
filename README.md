@@ -66,14 +66,6 @@ console.log(answer);
 | <img src="media/icon.svg" width="18" align="center"> [API Reference](docs/api.md) | Full docs for all 30+ methods with parameters and return types |
 | <img src="media/icon.svg" width="18" align="center"> [Protocol](docs/protocol.md) | How the reverse-engineered protocol works under the hood |
 
-## Project Layout
-
-```
-src/          Source code
-docs/         Documentation
-media/        Brand assets (SVG icon, banner)
-```
-
 ## License
 
 MIT &copy; [etrnkz](https://github.com/etrnkz)
