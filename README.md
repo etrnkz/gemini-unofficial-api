@@ -32,6 +32,8 @@
 ## Quick Start
 
 ```sh
+git clone https://github.com/etrnkz/Gemini-Reverse-No-Login.git
+cd Gemini-Reverse-No-Login
 npm install
 ```
 
