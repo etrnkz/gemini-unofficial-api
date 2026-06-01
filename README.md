@@ -20,7 +20,7 @@
 ---
 
 <p align="center">
-  <strong>Reverse-engineered Node.js client for Google Gemini</strong>
+  <strong>Unofficial Node.js client for Google Gemini</strong>
   <br>
   No login required for text — cookies unlock the full suite.
   <br>
@@ -66,7 +66,7 @@ console.log(answer);
 |---|---|
 | <img src="media/icon.svg" width="18" align="center"> [Guide](docs/guide.md) | Step-by-step usage: guest mode, login, file/video ops, constructor options |
 | <img src="media/icon.svg" width="18" align="center"> [API Reference](docs/api.md) | Full docs for all 30+ methods with parameters and return types |
-| <img src="media/icon.svg" width="18" align="center"> [Protocol](docs/protocol.md) | How the reverse-engineered protocol works under the hood |
+| <img src="media/icon.svg" width="18" align="center"> [Protocol](docs/protocol.md) | How the protocol works under the hood |
 
 ## License
 
