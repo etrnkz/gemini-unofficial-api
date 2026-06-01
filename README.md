@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="media/banner.svg" alt="Gemini Reverse">
+  <img src="media/banner.svg" alt="Gemini Unofficial API">
 </p>
 
 <p align="center">
@@ -32,8 +32,8 @@
 ## Quick Start
 
 ```sh
-git clone https://github.com/etrnkz/Gemini-Reverse-No-Login.git
-cd Gemini-Reverse-No-Login
+git clone https://github.com/etrnkz/gemini-unofficial-api.git
+cd gemini-unofficial-api
 npm install
 ```
 

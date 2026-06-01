@@ -2,7 +2,7 @@ import { GeminiClient } from './gemini.js';
 
 const client = new GeminiClient();
 
-console.log('Testing Gemini Reverse API (no login)...\n');
+console.log('Testing Gemini Unofficial API (no login)...\n');
 
 // Test 1: Basic message
 console.log('=== Test 1: Basic message ===');

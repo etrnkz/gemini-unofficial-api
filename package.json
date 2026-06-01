@@ -1,5 +1,5 @@
 {
-  "name": "gemini-reverse-no-login",
+  "name": "gemini-unofficial-api",
   "version": "1.0.0",
   "description": "Reverse engineered Gemini API client - no login required",
   "type": "module",
