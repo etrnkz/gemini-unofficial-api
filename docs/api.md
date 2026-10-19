@@ -27,6 +27,14 @@ Upload a file to Google's CDN. Returns a file ID string.
 
 Upload files and send a message with them attached. Files can be `string` paths, `{buffer, filename}` objects, or `{fileId, filename}` objects. Returns `{text, images, videos, fileUrls}`.
 
+### `sendImage(prompt, image, opts?)`
+
+Convenience wrapper around `sendMessageWithFiles`. Takes a single image file path, buffer, or fileId. Returns `{text, images, videos, fileUrls}`.
+
+### `streamImage(prompt, image, opts?)`
+
+Async generator that yields text deltas while analyzing an image.
+
 ### `sendVideo(prompt, video, opts?)`
 
 Convenience wrapper around `sendMessageWithFiles`. Takes a single video file path, buffer, or fileId. Returns `{text, images, videos, fileUrls}`.
@@ -118,3 +126,22 @@ Get the full-resolution URL for a generated image. Returns URL string or `null`.
 |--------|---------|
 | `getDeepResearchCaps()` | raw response |
 | `deepResearchBootstrap()` | raw response |
+
+## Model Context Protocol (MCP)
+
+### `startMcpServer(options?)`
+
+Starts the Model Context Protocol stdio server for AI agents and editors.
+
+### `createMcpHandler(clientOptions?)`
+
+Returns an async function `handleMessage(jsonRpcMessage)` to handle JSON-RPC 2.0 messages programmatically.
+
+### MCP Tools
+
+| Tool | Parameters | Description |
+|------|------------|-------------|
+| `gemini_ask` | `prompt` (string), `model` (optional string) | Sends text prompt to Gemini |
+| `gemini_ask_with_file` | `prompt` (string), `filePath` (string), `model` (optional string) | Sends prompt with uploaded file attachment |
+| `gemini_upload_file` | `filePath` (string) | Uploads file to CDN and returns file ID |
+| `gemini_list_models` | none | Lists supported models with details |

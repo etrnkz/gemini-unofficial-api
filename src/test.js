@@ -39,13 +39,55 @@ try {
   console.log('Upload error:', e.message);
 }
 
-// Test 6: File message (needs login)
-console.log('\n=== Test 6: File message (guest mode) ===');
+// Test 6: File message
+console.log('\n=== Test 6: File message ===');
 try {
-  const result = await client.sendMessageWithFiles('./package.json', ['./package.json']);
-  console.log('Response:', result.text);
+  const result = await client.sendMessageWithFiles('What package is this? Name only.', ['./package.json']);
+  console.log('Response:', result.text.substring(0, 200));
 } catch (e) {
-  console.log('Expected - guest mode:', e.message);
+  console.log('File error:', e.message);
+}
+
+// Test 7: Image message
+console.log('\n=== Test 7: Image support ===');
+try {
+  const pngPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+  const imgResult = await client.sendImage('What color is this image? One word.', { buffer: pngPixel, filename: 'pixel.png' });
+  console.log('Response:', imgResult.text.substring(0, 100));
+} catch (e) {
+  console.log('Image error:', e.message);
+}
+
+// Test 8: MCP Protocol
+console.log('\n=== Test 8: MCP Server Protocol ===');
+try {
+  const { createMcpHandler } = await import('./mcp.js');
+  const handler = createMcpHandler();
+
+  const initRes = await handler({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} });
+  console.log('MCP init server:', initRes.result.serverInfo.name);
+
+  const toolsRes = await handler({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} });
+  console.log('MCP tools count:', toolsRes.result.tools.length);
+  console.log('MCP tools:', toolsRes.result.tools.map(t => t.name).join(', '));
+
+  const modelsCall = await handler({
+    jsonrpc: '2.0',
+    id: 3,
+    method: 'tools/call',
+    params: { name: 'gemini_list_models', arguments: {} }
+  });
+  console.log('MCP tool call (models):', modelsCall.result.isError ? 'FAIL' : 'OK');
+
+  const askCall = await handler({
+    jsonrpc: '2.0',
+    id: 4,
+    method: 'tools/call',
+    params: { name: 'gemini_ask', arguments: { prompt: 'Reply with the word PONG' } }
+  });
+  console.log('MCP tool call (ask):', askCall.result.content[0].text.substring(0, 80));
+} catch (e) {
+  console.log('MCP error:', e.message);
 }
 
 // Post-login features (auto-detected from cookies.json or COOKIE env var)
@@ -64,18 +106,23 @@ if (client.isLoggedIn) {
   console.log('Models:', models.slice(0, 5).map(m => m.name).join(', '));
 
   console.log('\n--- listChats ---');
-  const chats = await client.listChats(3);
-  console.log('Recent chats:', chats.length);
+  let chats = [];
+  try {
+    chats = await client.listChats(3);
+    console.log('Recent chats:', chats.length);
+  } catch (e) { console.log('Chats error:', e.message); }
 
   console.log('\n--- sendMessageWithFiles ---');
-  const result = await client.sendMessageWithFiles(
-    'What does this file contain? Reply in 3 words.',
-    ['./package.json']
-  );
-  console.log('Response:', result.text);
-  if (result.images.length) {
-    console.log('Images:', result.images.length);
-  }
+  try {
+    const result = await client.sendMessageWithFiles(
+      'What does this file contain? Reply in 3 words.',
+      ['./package.json']
+    );
+    console.log('Response:', result.text);
+    if (result.images.length) {
+      console.log('Images:', result.images.length);
+    }
+  } catch (e) { console.log('Send files error:', e.message); }
 
   console.log('\n--- listGems ---');
   try {

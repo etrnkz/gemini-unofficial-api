@@ -1,15 +1,17 @@
 {
   "name": "gemini-unofficial-api",
   "version": "1.0.0",
-  "description": "Reverse engineered Gemini API client - no login required",
+  "description": "Unofficial Google Gemini API client with MCP server - no login required",
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "gemini": "./src/cli.js"
+    "gemini": "./src/cli.js",
+    "gemini-mcp": "./src/mcp.js"
   },
   "scripts": {
-    "start": "node src/cli.js",
-    "test": "node src/test.js"
+    "start": "node --max-http-header-size=65536 src/cli.js",
+    "mcp": "node --max-http-header-size=65536 src/mcp.js",
+    "test": "node --max-http-header-size=65536 src/test.js"
   },
   "dependencies": {
     "mime-types": "^3.0.2",
@@ -17,10 +19,12 @@
   },
   "keywords": [
     "gemini",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "bard",
     "google",
-    "ai",
-    "reverse"
+    "ai"
   ],
   "license": "MIT"
 }

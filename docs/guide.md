@@ -71,16 +71,20 @@ await client.login('__Secure-1PSID=...; __Secure-1PSIDTS=...');
 
 Get cookies from `gemini.google.com` in Chrome DevTools > Application > Cookies.
 
-## File / video operations
+## File, image & video operations
 
 ```js
 const fileId = await client.uploadFile('./image.jpg');
 
-const result = await client.sendMessageWithFiles(
-  'Describe this image', ['./photo.jpg']
-);
-console.log(result.text, result.images);
+// Analyze an image
+const imgResult = await client.sendImage('Describe this image', './photo.jpg');
+console.log(imgResult.text);
 
+for await (const chunk of client.streamImage('Describe in detail', './photo.jpg')) {
+  process.stdout.write(chunk);
+}
+
+// Analyze a video
 const vidResult = await client.sendVideo('Analyze this video', './clip.mp4');
 console.log(vidResult.text, vidResult.videos);
 
@@ -88,7 +92,64 @@ for await (const chunk of client.streamVideo('Describe this', './clip.mp4')) {
   process.stdout.write(chunk);
 }
 
+// Multiple files or generic file attachments
+const result = await client.sendMessageWithFiles(
+  'Summarize these files', ['./report.pdf', './code.js']
+);
+console.log(result.text, result.images);
+
 const buffer = await client.downloadFile('https://lh3.googleusercontent.com/...');
+```
+
+## Model Context Protocol (MCP) Server
+
+You can run Gemini as an MCP server over standard I/O for Claude Desktop, Cursor, OpenCode, or any MCP client:
+
+### Running directly
+
+```sh
+# Run via CLI
+node src/mcp.js
+
+# Or via npm
+npm run mcp
+```
+
+### Claude Desktop Setup
+
+In `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "gemini": {
+      "command": "node",
+      "args": ["--max-http-header-size=65536", "/path/to/gemini-unofficial-api/src/mcp.js"]
+    }
+  }
+}
+```
+
+### Programmatic MCP Handler
+
+```js
+import { createMcpHandler, startMcpServer } from 'gemini-unofficial-api';
+
+// Start server on stdio
+startMcpServer();
+
+// Or handle JSON-RPC messages programmatically
+const handler = createMcpHandler();
+const res = await handler({
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'tools/call',
+  params: {
+    name: 'gemini_ask',
+    arguments: { prompt: 'Explain quantum computing in simple terms' }
+  }
+});
+console.log(res.result.content[0].text);
 ```
 
 ## Constructor options

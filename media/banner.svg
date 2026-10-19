@@ -18,9 +18,9 @@
   </defs>
   <rect width="800" height="200" fill="url(#bg)" rx="16"/>
   <text x="60" y="100" font-family="'Courier New',monospace" font-size="32" font-weight="bold" fill="url(#gg)" letter-spacing="2">GEMINI API</text>
-  <text x="60" y="135" font-family="Arial,sans-serif" font-size="16" fill="url(#sub" opacity="0.9">Unofficial Node.js client for Google Gemini</text>
-  <rect x="60" y="150" width="180" height="28" rx="14" fill="none" stroke="#4285F4" stroke-width="1" opacity="0.5"/>
-  <text x="150" y="169" font-family="Arial,sans-serif" font-size="12" fill="#4285F4" text-anchor="middle" opacity="0.8">Node 18+  •  2 deps  •  MIT</text>
+  <text x="60" y="135" font-family="Arial,sans-serif" font-size="16" fill="url(#sub)" opacity="0.9">Unofficial Node.js client &amp; MCP server for Google Gemini</text>
+  <rect x="60" y="150" width="230" height="28" rx="14" fill="none" stroke="#4285F4" stroke-width="1" opacity="0.5"/>
+  <text x="175" y="169" font-family="Arial,sans-serif" font-size="12" fill="#4285F4" text-anchor="middle" opacity="0.8">Node 18+  •  MCP  •  2 deps  •  MIT</text>
   <path d="M700 60 Q730 30 760 60" stroke="#34A853" stroke-width="1.5" fill="none" opacity="0.3"/>
   <path d="M700 80 Q730 50 760 80" stroke="#4285F4" stroke-width="1.5" fill="none" opacity="0.3"/>
   <path d="M700 100 Q730 70 760 100" stroke="#FBBC05" stroke-width="1.5" fill="none" opacity="0.3"/>

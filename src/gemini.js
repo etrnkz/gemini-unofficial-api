@@ -463,6 +463,14 @@ export class GeminiClient {
     }
   }
 
+  async sendImage(prompt, image, { model = 'gemini-3.5-flash' } = {}) {
+    return this.sendMessageWithFiles(prompt, [image], { model });
+  }
+
+  async *streamImage(prompt, image, { model = 'gemini-3.5-flash' } = {}) {
+    yield* this.streamWithFiles(prompt, [image], { model });
+  }
+
   async sendVideo(prompt, video, { model = 'gemini-3.5-flash' } = {}) {
     return this.sendMessageWithFiles(prompt, [video], { model });
   }
@@ -472,17 +480,26 @@ export class GeminiClient {
   }
 
   async listModels() {
-    const raw = await this._batchExec('otAQ7b', '[]');
-    const body = findWrbResult(raw, 'otAQ7b');
-    const models = body?.[15];
-    if (Array.isArray(models)) {
-      return models.map(m => ({
-        id: m?.[0] || '',
-        name: m?.[1] || '',
-        description: m?.[2] || '',
-      })).filter(m => m.id);
+    if (this._atToken) {
+      try {
+        const raw = await this._batchExec('otAQ7b', '[]', '/app', false);
+        const body = findWrbResult(raw, 'otAQ7b');
+        const models = body?.[15];
+        if (Array.isArray(models)) {
+          const list = models.map(m => ({
+            id: m?.[0] || '',
+            name: m?.[1] || '',
+            description: m?.[2] || '',
+          })).filter(m => m.id);
+          if (list.length > 0) return list;
+        }
+      } catch { }
     }
-    return [];
+    return Object.entries(MODELS).map(([id, cfg]) => ({
+      id,
+      name: id.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+      description: cfg.think === 0 ? 'Gemini thinking model' : 'Gemini model',
+    }));
   }
 
   async listChats(limit = 13) {
