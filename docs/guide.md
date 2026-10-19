@@ -38,6 +38,47 @@ Or using individual cookie fields:
 }
 ```
 
+### Multi-Account Support
+
+You can configure multiple accounts in `cookies.json`:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "pro",
+      "__Secure-1PSID": "...",
+      "__Secure-1PSIDTS": "..."
+    },
+    {
+      "name": "backup",
+      "cookie": "__Secure-1PSID=...; __Secure-1PSIDTS=..."
+    }
+  ]
+}
+```
+
+Or pass multiple accounts via the constructor:
+
+```js
+const client = new GeminiClient({
+  accounts: [
+    { name: 'pro', cookie: '__Secure-1PSID=...' },
+    { name: 'backup', cookie: '__Secure-1PSID=...' }
+  ],
+  autoRotate: true // automatically switch to next account on failure
+});
+
+// View all accounts
+console.log(client.listAccounts());
+
+// Switch active account by name or index
+client.useAccount('backup');
+
+// Rotate to next account
+client.rotateAccount();
+```
+
 The client auto-detects it — no need to call `login()`:
 
 ```js

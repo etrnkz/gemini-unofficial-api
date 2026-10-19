@@ -23,6 +23,10 @@ const TOOLS = [
           enum: Object.keys(MODELS),
           default: 'gemini-3.5-flash',
         },
+        account: {
+          type: 'string',
+          description: 'Optional account name or index to use for this request',
+        },
       },
       required: ['prompt'],
     },
@@ -46,6 +50,10 @@ const TOOLS = [
           description: 'Gemini model to use',
           enum: Object.keys(MODELS),
           default: 'gemini-3.5-flash',
+        },
+        account: {
+          type: 'string',
+          description: 'Optional account name or index to use for this request',
         },
       },
       required: ['prompt', 'filePath'],
@@ -89,6 +97,28 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {},
+    },
+  },
+  {
+    name: 'gemini_list_accounts',
+    description: 'List all loaded Google accounts, which one is currently active, and their login status.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'gemini_switch_account',
+    description: 'Switch the active account by name or index for subsequent requests.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        account: {
+          type: 'string',
+          description: 'Account name or numeric index to switch to',
+        },
+      },
+      required: ['account'],
     },
   },
 ];
@@ -177,6 +207,10 @@ export function createMcpHandler(clientOptions = {}) {
 
 async function executeTool(client, name, args) {
   try {
+    if (args.account !== undefined && args.account !== null) {
+      client.useAccount(args.account);
+    }
+
     switch (name) {
       case 'gemini_ask': {
         const { prompt, model = 'gemini-3.5-flash' } = args;
@@ -255,6 +289,24 @@ async function executeTool(client, name, args) {
         const models = await client.listModels();
         return {
           content: [{ type: 'text', text: JSON.stringify(models, null, 2) }],
+          isError: false,
+        };
+      }
+
+      case 'gemini_list_accounts': {
+        const accounts = client.listAccounts();
+        return {
+          content: [{ type: 'text', text: JSON.stringify(accounts, null, 2) }],
+          isError: false,
+        };
+      }
+
+      case 'gemini_switch_account': {
+        const { account } = args;
+        if (account === undefined || account === null) throw new Error('Missing required argument: account');
+        const switched = client.useAccount(account);
+        return {
+          content: [{ type: 'text', text: `Switched active account to: ${switched.name}` }],
           isError: false,
         };
       }

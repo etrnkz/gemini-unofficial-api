@@ -6,14 +6,144 @@ import mime from 'mime-types';
 import { BASE, UPLOAD_URL, UA, MODELS, parseWrb, findWrbResult } from './constants.js';
 
 export class GeminiClient {
-  constructor({ cookie, cookiesFile } = {}) {
+  constructor({ cookie, accounts, cookiesFile, autoRotate = true } = {}) {
+    this.accounts = [];
+    this.activeAccountIndex = 0;
+    this.autoRotate = autoRotate;
     this.cookie = cookie || process.env.GEMINI_COOKIE || process.env.COOKIE || '';
     this.bl = null;
     this.reqId = Math.floor(Math.random() * 900000) + 100000;
     this.pushId = null;
     this._atToken = null;
-    if (!this.cookie && cookiesFile !== false) {
+
+    if (Array.isArray(accounts)) {
+      for (let i = 0; i < accounts.length; i++) {
+        this.addAccount(accounts[i], accounts[i]?.name || `account-${i + 1}`);
+      }
+    }
+
+    if (this.cookie) {
+      this.addAccount({ name: 'default', cookie: this.cookie });
+    }
+
+    if (this.accounts.length === 0 && cookiesFile !== false) {
       this._tryLoadCookies(cookiesFile || 'cookies.json');
+    }
+
+    if (this.accounts.length > 0) {
+      this._applyActiveAccount();
+    }
+  }
+
+  static parseCookieString(input) {
+    if (!input) return '';
+    if (typeof input === 'string') return input.trim();
+    if (typeof input === 'object') {
+      if (input.cookie && typeof input.cookie === 'string') return input.cookie.trim();
+      const parts = [];
+      for (const [k, v] of Object.entries(input)) {
+        if (v && typeof v === 'string' && k !== 'name') parts.push(`${k}=${v}`);
+      }
+      return parts.join('; ');
+    }
+    return '';
+  }
+
+  addAccount(accountData, customName = null) {
+    let name = customName;
+    let cookieStr = '';
+
+    if (typeof accountData === 'string') {
+      cookieStr = accountData.trim();
+      name = name || `account-${this.accounts.length + 1}`;
+    } else if (accountData && typeof accountData === 'object') {
+      name = name || accountData.name || `account-${this.accounts.length + 1}`;
+      cookieStr = GeminiClient.parseCookieString(accountData);
+    }
+
+    if (!cookieStr) return null;
+
+    const existingIdx = this.accounts.findIndex(a => a.name.toLowerCase() === name.toLowerCase());
+    const acc = {
+      name,
+      cookie: cookieStr,
+      atToken: null,
+      bl: null,
+      pushId: null,
+      isLoggedIn: false,
+    };
+
+    if (existingIdx >= 0) {
+      this.accounts[existingIdx] = acc;
+    } else {
+      this.accounts.push(acc);
+    }
+
+    if (this.accounts.length === 1) {
+      this.activeAccountIndex = 0;
+      this._applyActiveAccount();
+    }
+
+    return acc;
+  }
+
+  useAccount(nameOrIndex) {
+    let targetIndex = -1;
+    if (typeof nameOrIndex === 'number') {
+      if (nameOrIndex >= 0 && nameOrIndex < this.accounts.length) {
+        targetIndex = nameOrIndex;
+      }
+    } else if (typeof nameOrIndex === 'string') {
+      targetIndex = this.accounts.findIndex(a => a.name.toLowerCase() === nameOrIndex.toLowerCase());
+    }
+
+    if (targetIndex === -1) {
+      throw new Error(`Account not found: ${nameOrIndex}`);
+    }
+
+    this._syncActiveAccount();
+    this.activeAccountIndex = targetIndex;
+    this._applyActiveAccount();
+    return this.accounts[this.activeAccountIndex];
+  }
+
+  rotateAccount() {
+    if (this.accounts.length <= 1) return this.accounts[0] || null;
+    this._syncActiveAccount();
+    this.activeAccountIndex = (this.activeAccountIndex + 1) % this.accounts.length;
+    this._applyActiveAccount();
+    return this.accounts[this.activeAccountIndex];
+  }
+
+  listAccounts() {
+    this._syncActiveAccount();
+    return this.accounts.map((acc, index) => ({
+      index,
+      name: acc.name,
+      active: index === this.activeAccountIndex,
+      isLoggedIn: !!acc.atToken,
+      hasCookie: !!acc.cookie,
+    }));
+  }
+
+  _applyActiveAccount() {
+    if (this.accounts.length > 0 && this.accounts[this.activeAccountIndex]) {
+      const active = this.accounts[this.activeAccountIndex];
+      this.cookie = active.cookie;
+      this._atToken = active.atToken;
+      this.bl = active.bl;
+      this.pushId = active.pushId;
+    }
+  }
+
+  _syncActiveAccount() {
+    if (this.accounts.length > 0 && this.accounts[this.activeAccountIndex]) {
+      const active = this.accounts[this.activeAccountIndex];
+      active.cookie = this.cookie;
+      active.atToken = this._atToken;
+      active.bl = this.bl;
+      active.pushId = this.pushId;
+      active.isLoggedIn = this.isLoggedIn;
     }
   }
 
@@ -22,14 +152,24 @@ export class GeminiClient {
       const resolved = path.resolve(file);
       if (!fs.existsSync(resolved)) return;
       const data = JSON.parse(fs.readFileSync(resolved, 'utf-8'));
-      if (data.cookie) {
-        this.cookie = data.cookie;
-      } else if (data['__Secure-1PSID']) {
-        const parts = [];
-        for (const [k, v] of Object.entries(data)) {
-          if (v) parts.push(`${k}=${v}`);
+
+      if (Array.isArray(data)) {
+        for (let i = 0; i < data.length; i++) {
+          this.addAccount(data[i], data[i]?.name || `account-${i + 1}`);
         }
-        this.cookie = parts.join('; ');
+      } else if (Array.isArray(data.accounts)) {
+        for (let i = 0; i < data.accounts.length; i++) {
+          const item = data.accounts[i];
+          this.addAccount(item, item?.name || `account-${i + 1}`);
+        }
+      } else if (data['__Secure-1PSID'] || data.cookie) {
+        this.addAccount({ name: 'default', ...data });
+      } else if (typeof data === 'object') {
+        for (const [name, val] of Object.entries(data)) {
+          if (val && (typeof val === 'string' || typeof val === 'object')) {
+            this.addAccount(val, name);
+          }
+        }
       }
     } catch { }
   }
@@ -70,12 +210,14 @@ export class GeminiClient {
     if (atMatch) {
       this._atToken = atMatch[1];
     }
+    this._syncActiveAccount();
 
     return this;
   }
 
-  async login(cookieString) {
-    this.cookie = cookieString;
+  async login(cookieString, name = 'default') {
+    this.addAccount(cookieString, name);
+    this.useAccount(name);
     this.bl = null;
     this._atToken = null;
     this.pushId = null;
@@ -112,9 +254,18 @@ export class GeminiClient {
     return params.toString();
   }
 
-  _request(prompt, modelId, thinkMode, files = null) {
-    if (!this.bl) return this.init().then(() => this._doRequest(prompt, modelId, thinkMode, files));
-    return this._doRequest(prompt, modelId, thinkMode, files);
+  async _request(prompt, modelId, thinkMode, files = null, attempts = 0) {
+    if (!this.bl) await this.init();
+    try {
+      return await this._doRequest(prompt, modelId, thinkMode, files);
+    } catch (err) {
+      if (this.autoRotate && this.accounts.length > 1 && attempts < this.accounts.length - 1) {
+        this.rotateAccount();
+        if (!this.bl) await this.init();
+        return this._request(prompt, modelId, thinkMode, files, attempts + 1);
+      }
+      throw err;
+    }
   }
 
   async _doRequest(prompt, modelId, thinkMode, files = null) {

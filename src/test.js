@@ -132,8 +132,41 @@ try {
     params: { name: 'gemini_download_file', arguments: { url: 'https://www.google.com/favicon.ico' } }
   });
   console.log('MCP tool call (download):', downloadCall.result.content[0].text.substring(0, 80));
+
+  const accountsCall = await handler({
+    jsonrpc: '2.0',
+    id: 6,
+    method: 'tools/call',
+    params: { name: 'gemini_list_accounts', arguments: {} }
+  });
+  console.log('MCP tool call (accounts):', accountsCall.result.isError ? 'FAIL' : 'OK');
 } catch (e) {
   console.log('MCP error:', e.message);
+}
+
+// Test 11: Multi-Account Management
+console.log('\n=== Test 11: Multi-Account Management ===');
+try {
+  const multi = new GeminiClient({
+    cookiesFile: false,
+    accounts: [
+      { name: 'pro-user', cookie: '__Secure-1PSID=token_pro' },
+      { name: 'backup-user', cookie: '__Secure-1PSID=token_backup' }
+    ]
+  });
+  console.log('Loaded accounts:', multi.accounts.length);
+  const initial = multi.listAccounts();
+  console.log('Active account:', initial.find(a => a.active)?.name);
+
+  multi.rotateAccount();
+  const rotated = multi.listAccounts();
+  console.log('After rotate:', rotated.find(a => a.active)?.name);
+
+  multi.useAccount('pro-user');
+  const switched = multi.listAccounts();
+  console.log('After switch back:', switched.find(a => a.active)?.name);
+} catch (e) {
+  console.log('Multi-account error:', e.message);
 }
 
 // Post-login features (auto-detected from cookies.json or COOKIE env var)

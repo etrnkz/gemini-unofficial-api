@@ -58,11 +58,23 @@ Initialize session parameters (called automatically on first request). Called on
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `cookie` | `string` | `''` | Pre-set cookie string |
+| `accounts` | `Array` | `[]` | Array of account objects `{ name, cookie }` |
 | `cookiesFile` | `string\|false` | `'cookies.json'` | Auto-load cookies from JSON file (`false` to disable) |
+| `autoRotate` | `boolean` | `true` | Automatically rotate to next account on failure |
 
-Auto-detected `cookies.json` supports two formats:
-- `{ "cookie": "__Secure-1PSID=...; __Secure-1PSIDTS=..." }` — full cookie string
+Auto-detected `cookies.json` supports single and multi-account configurations:
+- `{ "cookie": "__Secure-1PSID=...; __Secure-1PSIDTS=..." }` — single account
 - `{ "__Secure-1PSID": "...", "__Secure-1PSIDTS": "..." }` — individual fields
+- `{ "accounts": [{ "name": "pro", "cookie": "..." }, { "name": "backup", ... }] }` — multi-account list
+
+### Multi-Account methods
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `listAccounts()` | none | `Array` | List all accounts with index, name, active, and login status |
+| `useAccount(nameOrIndex)` | `nameOrIndex` (string\|number) | `Account` | Switch the active account |
+| `rotateAccount()` | none | `Account` | Rotate to the next available account |
+| `addAccount(data, name?)` | `data` (string\|object), `name?` | `Account` | Add or update an account in the pool |
 
 ### `cookie`
 
@@ -146,3 +158,5 @@ Returns an async function `handleMessage(jsonRpcMessage)` to handle JSON-RPC 2.0
 | `gemini_upload_file` | `filePath` (string) | Uploads file to CDN and returns file ID |
 | `gemini_download_file` | `url` (string), `destPath` (optional string) | Downloads a remote file/image to buffer or disk |
 | `gemini_list_models` | none | Lists supported models with details |
+| `gemini_list_accounts` | none | Lists all loaded accounts and active status |
+| `gemini_switch_account` | `account` (string) | Switches active account by name or index |
