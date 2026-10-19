@@ -144,4 +144,5 @@ Returns an async function `handleMessage(jsonRpcMessage)` to handle JSON-RPC 2.0
 | `gemini_ask` | `prompt` (string), `model` (optional string) | Sends text prompt to Gemini |
 | `gemini_ask_with_file` | `prompt` (string), `filePath` (string), `model` (optional string) | Sends prompt with uploaded file attachment |
 | `gemini_upload_file` | `filePath` (string) | Uploads file to CDN and returns file ID |
+| `gemini_download_file` | `url` (string), `destPath` (optional string) | Downloads a remote file/image to buffer or disk |
 | `gemini_list_models` | none | Lists supported models with details |

@@ -66,6 +66,24 @@ const TOOLS = [
     },
   },
   {
+    name: 'gemini_download_file',
+    description: 'Download a remote file or image (such as an image or media URL returned by Gemini) and optionally save it to disk.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The URL of the file or image to download',
+        },
+        destPath: {
+          type: 'string',
+          description: 'Optional local file path to save the downloaded file to',
+        },
+      },
+      required: ['url'],
+    },
+  },
+  {
     name: 'gemini_list_models',
     description: 'List all supported Google Gemini models with their capabilities and descriptions.',
     inputSchema: {
@@ -211,6 +229,24 @@ async function executeTool(client, name, args) {
         const fileId = await client.uploadFile(resolved);
         return {
           content: [{ type: 'text', text: fileId }],
+          isError: false,
+        };
+      }
+
+      case 'gemini_download_file': {
+        const { url, destPath } = args;
+        if (!url) throw new Error('Missing required argument: url');
+
+        const resolved = destPath ? path.resolve(destPath) : null;
+        const res = await client.downloadFile(url, resolved);
+        if (resolved) {
+          return {
+            content: [{ type: 'text', text: `Saved file to ${resolved} (${fs.statSync(resolved).size} bytes)` }],
+            isError: false,
+          };
+        }
+        return {
+          content: [{ type: 'text', text: `Downloaded ${res.length} bytes successfully` }],
           isError: false,
         };
       }

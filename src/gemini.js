@@ -564,8 +564,10 @@ export class GeminiClient {
   }
 
   async downloadFile(url, destPath = null) {
+    const headers = { 'User-Agent': UA };
+    if (this.cookie) headers['Cookie'] = this.cookie;
     const res = await fetch(url, {
-      headers: { 'User-Agent': UA },
+      headers,
       redirect: 'follow',
     });
     if (!res.ok) throw new Error(`Download failed: ${res.status}`);

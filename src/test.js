@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { GeminiClient } from './gemini.js';
 
 const client = new GeminiClient();
@@ -58,8 +59,45 @@ try {
   console.log('Image error:', e.message);
 }
 
-// Test 8: MCP Protocol
-console.log('\n=== Test 8: MCP Server Protocol ===');
+// Test 8: Video message
+console.log('\n=== Test 8: Video support ===');
+try {
+  let vidBuffer = null;
+  try {
+    const { execSync } = await import('child_process');
+    execSync('ffmpeg -y -f lavfi -i color=c=blue:s=64x64:d=1 -c:v libx264 -pix_fmt yuv420p test_blue.mp4', { stdio: 'pipe', shell: true });
+    if (fs.existsSync('test_blue.mp4')) {
+      vidBuffer = fs.readFileSync('test_blue.mp4');
+      fs.unlinkSync('test_blue.mp4');
+    }
+  } catch { }
+
+  if (vidBuffer) {
+    const vidResult = await client.sendVideo('What color is this video? One word.', { buffer: vidBuffer, filename: 'blue.mp4' });
+    console.log('Response:', vidResult.text.substring(0, 100));
+  } else {
+    console.log('Response: (ffmpeg skipped)');
+  }
+} catch (e) {
+  console.log('Video error:', e.message);
+}
+
+// Test 9: Download support
+console.log('\n=== Test 9: Download support ===');
+try {
+  let buf;
+  try {
+    buf = await client.downloadFile('https://www.google.com/favicon.ico');
+  } catch {
+    buf = await client.downloadFile('https://gemini.google.com/favicon.ico');
+  }
+  console.log('Downloaded bytes:', buf.length);
+} catch (e) {
+  console.log('Download error:', e.message);
+}
+
+// Test 10: MCP Protocol
+console.log('\n=== Test 10: MCP Server Protocol ===');
 try {
   const { createMcpHandler } = await import('./mcp.js');
   const handler = createMcpHandler();
@@ -86,6 +124,14 @@ try {
     params: { name: 'gemini_ask', arguments: { prompt: 'Reply with the word PONG' } }
   });
   console.log('MCP tool call (ask):', askCall.result.content[0].text.substring(0, 80));
+
+  const downloadCall = await handler({
+    jsonrpc: '2.0',
+    id: 5,
+    method: 'tools/call',
+    params: { name: 'gemini_download_file', arguments: { url: 'https://www.google.com/favicon.ico' } }
+  });
+  console.log('MCP tool call (download):', downloadCall.result.content[0].text.substring(0, 80));
 } catch (e) {
   console.log('MCP error:', e.message);
 }

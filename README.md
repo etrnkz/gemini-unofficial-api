@@ -56,7 +56,7 @@ console.log(answer);
 | Images | `sendImage`, `streamImage` | none |
 | Files | `uploadFile`, `uploadBuffer`, `sendMessageWithFiles` | none |
 | Video | `sendVideo`, `streamVideo` | cookie |
-| MCP | `gemini_ask`, `gemini_ask_with_file`, `gemini_upload_file`, `gemini_list_models` | optional |
+| MCP | `gemini_ask`, `gemini_ask_with_file`, `gemini_upload_file`, `gemini_download_file`, `gemini_list_models` | optional |
 | Chats | `listChats`, `readChat`, `deleteChat`, `renameChat`, `generateChatTitle` | cookie |
 | Gems | `listGems`, `createGem`, `updateGem`, `deleteGem` | cookie |
 | Memory | `listMemories`, `createMemory`, `updateMemory`, `deleteMemory`, `deleteAllMemories` | cookie |
@@ -96,6 +96,7 @@ Add to your `claude_desktop_config.json`:
 - **`gemini_ask`**: Ask questions or generate text/code with any Gemini model
 - **`gemini_ask_with_file`**: Inspect local files (images, PDFs, videos, code, audio)
 - **`gemini_upload_file`**: Upload a file to Google CDN storage and get a file ID
+- **`gemini_download_file`**: Download any remote file or image to disk or buffer
 - **`gemini_list_models`**: View all supported models and capabilities
 
 ## Docs
