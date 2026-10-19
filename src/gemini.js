@@ -54,8 +54,8 @@ export class GeminiClient {
     }
 
     const html = await res.text();
-    const blMatch = html.match(/boq_assistant[\w.-]+/);
-    this.bl = blMatch ? blMatch[0] : 'boq_assistant-bard-web-server_20260529.02_p0';
+    const blMatch = html.match(/boq_[\w-]+_\d{8}\.\d+_p\d+/);
+    this.bl = blMatch ? blMatch[0] : 'boq_gemini-web-uiserver_20261016.00_p0';
 
     const pushIdx = html.indexOf('feeds/mcud');
     if (pushIdx > -1) {
@@ -65,6 +65,9 @@ export class GeminiClient {
         this.pushId = html.substring(qBefore + 1, qAfter);
       }
     }
+
+    const sidMatch = html.match(/"FdrFJe"\s*:\s*"(.*?)"/);
+    this._fsid = sidMatch ? sidMatch[1] : null;
 
     const atMatch = html.match(/"SNlM0e"\s*:\s*"(.*?)"/);
     if (atMatch) {
@@ -195,9 +198,10 @@ export class GeminiClient {
     qp.append('rt', 'c');
     qp.append('source-path', sourcePath);
     qp.append('bl', this.bl);
+    if (this._fsid) qp.append('f.sid', this._fsid);
 
     const bp = new URLSearchParams();
-    bp.append('f.req', JSON.stringify([[rpcId, payload, null, 'generic']]));
+    bp.append('f.req', JSON.stringify([[[rpcId, payload, null, 'generic']]]));
     bp.append('at', this._atToken);
 
     const headers = {
@@ -611,7 +615,7 @@ export class GeminiClient {
     if (!Array.isArray(list)) return [];
     return list.map(m => ({
       id: m?.[0] || '',
-      text: m?.[1]?.[0]?.[0] || '',
+      text: typeof m?.[1] === 'string' ? m[1] : (m?.[1]?.[0]?.[0] || ''),
       createdAt: m?.[1]?.[0]?.[1] || null,
     })).filter(m => m.id);
   }
