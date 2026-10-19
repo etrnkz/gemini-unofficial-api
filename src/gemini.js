@@ -7,7 +7,7 @@ import { BASE, UPLOAD_URL, UA, MODELS, parseWrb, findWrbResult } from './constan
 
 export class GeminiClient {
   constructor({ cookie, cookiesFile } = {}) {
-    this.cookie = cookie || '';
+    this.cookie = cookie || process.env.GEMINI_COOKIE || process.env.COOKIE || '';
     this.bl = null;
     this.reqId = Math.floor(Math.random() * 900000) + 100000;
     this.pushId = null;
