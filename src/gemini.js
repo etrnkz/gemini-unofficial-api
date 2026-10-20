@@ -154,8 +154,14 @@ export class GeminiClient {
       const data = JSON.parse(fs.readFileSync(resolved, 'utf-8'));
 
       if (Array.isArray(data)) {
-        for (let i = 0; i < data.length; i++) {
-          this.addAccount(data[i], data[i]?.name || `account-${i + 1}`);
+        const isCookieList = data.length > 0 && data.every(item => item && typeof item === 'object' && item.name && item.value !== undefined);
+        if (isCookieList) {
+          const cookieStr = data.map(c => `${c.name}=${c.value}`).join('; ');
+          this.addAccount({ name: 'default', cookie: cookieStr });
+        } else {
+          for (let i = 0; i < data.length; i++) {
+            this.addAccount(data[i], data[i]?.name || `account-${i + 1}`);
+          }
         }
       } else if (Array.isArray(data.accounts)) {
         for (let i = 0; i < data.accounts.length; i++) {
