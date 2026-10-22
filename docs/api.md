@@ -43,6 +43,32 @@ Convenience wrapper around `sendMessageWithFiles`. Takes a single video file pat
 
 Async generator that yields text deltas while sending a video.
 
+## Video generation (Google Veo)
+
+### `generateVideo(prompt, opts?)`
+
+Generates a video with Google Veo through Gemini. Requires an authenticated account with video generation entitlement. Sends the prompt, then polls the chat until the video is ready.
+
+| Opt | Type | Default | Description |
+|-----|------|---------|-------------|
+| `model` | `string` | `'gemini-3.1-pro'` | Model used for generation |
+| `timeout` | `number` | `600000` | Max milliseconds to wait |
+| `interval` | `number` | `15000` | Poll interval in milliseconds |
+
+Returns `{ready, chatId, text, videos, images}`. When `ready` is `true`, `videos[0]` contains `{url, downloadUrl, name, mime}`.
+
+```js
+const res = await client.generateVideo('A red ball bouncing on wood, 4 seconds');
+if (res.ready) {
+  console.log(res.videos[0].downloadUrl);
+  await client.downloadFile(res.videos[0].url, 'video.mp4');
+}
+```
+
+### `waitForVideo(chatId, opts?)`
+
+Polls an existing chat until a generated video becomes ready. Same options and return shape as `generateVideo`.
+
 ## Authentication
 
 ### `login(cookieString)`
@@ -158,5 +184,6 @@ Returns an async function `handleMessage(jsonRpcMessage)` to handle JSON-RPC 2.0
 | `gemini_upload_file` | `filePath` (string) | Uploads file to CDN and returns file ID |
 | `gemini_download_file` | `url` (string), `destPath` (optional string) | Downloads a remote file/image to buffer or disk |
 | `gemini_list_models` | none | Lists supported models with details |
+| `gemini_generate_video` | `prompt` (string), `model` (optional), `timeout` (optional) | Generates a video with Veo and polls until ready |
 | `gemini_list_accounts` | none | Lists all loaded accounts and active status |
 | `gemini_switch_account` | `account` (string) | Switches active account by name or index |

@@ -24,9 +24,11 @@ https://gemini.google.com/_/BardChatUi/data/batchexecute
 
 Parameters: `rpcids`, `bl`, `hl`, `_reqid`, `rt=c`, `source-path`
 
-Each RPC call has a 6-character ID (e.g. `MaZiqc` for list chats, `CNgdBe` for list gems). The body is `f.req=[[rpcId, payload, null, 'generic']]` with an `at` parameter containing the `SNlM0e` token.
+Each RPC call has a 6-character ID (e.g. `MaZiqc` for list chats, `CNgdBe` for list gems, `hNvQHb` for read chat, `otAQ7b` for list models). The body is `f.req=[[[rpcId, payload, null, 'generic']]]` with an `at` parameter containing the `SNlM0e` token.
 
-Requires `SNlM0e` token from the authenticated page HTML — only present when valid Google cookies are sent.
+> **Note:** the `f.req` value is **triple-nested**. The flat form `[[rpcId, ...]]` is rejected with HTTP 400, while `[[[rpcId, ...]]]` is accepted and returns `wrb.fr` results.
+
+Requires `SNlM0e` token from the authenticated page HTML — only present when valid Google cookies are sent. The token prefix differs between sessions: guest sessions get `AOOh0...`, authenticated sessions get `AIaPT3...`.
 
 ## File upload
 
@@ -60,3 +62,23 @@ Each media entry follows a pattern: `[id, [url, alt, ...]]` where the URL is typ
 ## Video support
 
 Video files use the same upload and StreamGenerate pipeline as images. The file is uploaded to `content-push.googleapis.com`, and the returned file ID is attached to the message payload in the same position as image file IDs. The model processes the video and returns analysis as text. Video references in the response are extracted from `inner[12][6]` and include URL, thumbnail, and duration when available.
+
+## Video generation (Veo)
+
+Video *generation* is a separate, asynchronous flow that requires an authenticated account with video generation entitlement.
+
+1. **Request** — a normal `StreamGenerate` call with a video-generation prompt. The response contains a placeholder:
+   > `I'm generating your video. This could take a few minutes, so check back to see when your video is ready.`
+
+   The chat id is at `inner[1][0]` and the task id at `inner[2]["21"][0]`.
+
+2. **Poll** — the chat is re-read with the `hNvQHb` RPC until the video appears. The video media entry lives at `body[3][2][0][0][0][0][0]`:
+
+   | Index | Content |
+   |-------|---------|
+   | `[2]` | Filename (e.g. `video.mp4`) |
+   | `[7][0]` | Direct CDN URL (`lh3.googleusercontent.com/gg/...`) |
+   | `[7][1]` | Download URL (`contribution.usercontent.google.com/download?...`) |
+   | `[11]` | MIME type (`video/mp4`) |
+
+3. **Download** — the download URL requires the same Google session cookie; without it the server redirects to the Google Accounts sign-in page. The CDN host does not support HTTP range requests, so a failed transfer cannot be resumed.

@@ -56,6 +56,7 @@ console.log(answer);
 | Images | `sendImage`, `streamImage` | none |
 | Files | `uploadFile`, `uploadBuffer`, `sendMessageWithFiles` | none |
 | Video | `sendVideo`, `streamVideo` | cookie |
+| Video gen | `generateVideo`, `waitForVideo` | cookie |
 | Accounts | `listAccounts`, `useAccount`, `rotateAccount`, `addAccount` | optional |
 | MCP | `gemini_ask`, `gemini_ask_with_file`, `gemini_upload_file`, `gemini_download_file`, `gemini_list_models`, `gemini_list_accounts`, `gemini_switch_account` | optional |
 | Chats | `listChats`, `readChat`, `deleteChat`, `renameChat`, `generateChatTitle` | cookie |
