@@ -731,30 +731,48 @@ export class GeminiClient {
     const images = [];
     let text = '';
 
-    // Video media lives at body[3][2][0][0][0][0][0]
+    // Video media lives at body[3][2][0][0][0][0][0], but scan for it robustly.
     const mediaRoot = body?.[3]?.[2]?.[0]?.[0]?.[0]?.[0]?.[0];
-    if (Array.isArray(mediaRoot)) {
-      const name = mediaRoot[2] || '';
-      const mime = mediaRoot[11] || '';
-      const urls = mediaRoot[7] || [];
+    const mediaNodes = [];
+    if (Array.isArray(mediaRoot)) mediaNodes.push(mediaRoot);
+    // Fallback: find any node shaped like a media entry (has name + mime + urls)
+    (function scan(node, depth) {
+      if (depth > 14 || !node || typeof node !== 'object') return;
+      if (Array.isArray(node)) {
+        if (node.length > 10 && typeof node[2] === 'string' && Array.isArray(node[7]) && typeof node[11] === 'string') {
+          mediaNodes.push(node);
+          return;
+        }
+        for (const v of node) scan(v, depth + 1);
+        return;
+      }
+      for (const v of Object.values(node)) scan(v, depth + 1);
+    })(body, 0);
+
+    for (const node of mediaNodes) {
+      const name = node[2] || '';
+      const mime = node[11] || '';
+      const urls = node[7] || [];
       const url = urls[0] || urls[1] || urls[2] || null;
       const downloadUrl = urls[1] || null;
-      if (url && (mime.includes('video') || name.endsWith('.mp4'))) {
+      if (!url) continue;
+      if (mime.includes('video') || name.endsWith('.mp4')) {
         videos.push({ url, downloadUrl, urls: urls.filter(Boolean), name, mime });
       }
     }
 
     // Conversation text
+    // turn[3] = candidate list, candidate[0] = model part, modelPart[1] = text deltas
     const turns = body?.[0];
     if (Array.isArray(turns)) {
       for (const turn of turns) {
-        const parts = turn?.[3];
-        if (!Array.isArray(parts)) continue;
-        for (const part of parts) {
-          if (Array.isArray(part?.[1])) {
-            for (const t of part[1]) {
-              if (typeof t === 'string' && t.length > 0) text = t;
-            }
+        const candidates = turn?.[3];
+        if (!Array.isArray(candidates)) continue;
+        for (const candidate of candidates) {
+          const modelPart = candidate?.[0];
+          if (!Array.isArray(modelPart)) continue;
+          for (const t of modelPart[1] || []) {
+            if (typeof t === 'string' && t.length > 0) text = t;
           }
         }
       }
