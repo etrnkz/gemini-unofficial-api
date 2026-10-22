@@ -740,7 +740,7 @@ export class GeminiClient {
       const url = urls[0] || urls[1] || urls[2] || null;
       const downloadUrl = urls[1] || null;
       if (url && (mime.includes('video') || name.endsWith('.mp4'))) {
-        videos.push({ url, downloadUrl, name, mime });
+        videos.push({ url, downloadUrl, urls: urls.filter(Boolean), name, mime });
       }
     }
 
@@ -859,20 +859,66 @@ export class GeminiClient {
     return body?.[0] || '';
   }
 
-  async downloadFile(url, destPath = null) {
-    const headers = { 'User-Agent': UA };
+  async downloadFile(url, destPath = null, { timeout = 300000, referer = 'https://gemini.google.com/' } = {}) {
+    const headers = {
+      'User-Agent': UA,
+      'Accept': '*/*',
+      'Referer': referer,
+    };
     if (this.cookie) headers['Cookie'] = this.cookie;
-    const res = await fetch(url, {
-      headers,
-      redirect: 'follow',
-    });
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    let res;
+    try {
+      res = await fetch(url, { headers, redirect: 'follow', signal: controller.signal });
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error(`Download timed out after ${timeout}ms`);
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
+
     if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+    const ctype = res.headers.get('content-type') || '';
+    if (ctype.includes('text/html')) {
+      throw new Error('Download returned an HTML page (session expired or blocked)');
+    }
+
     const buffer = Buffer.from(await res.arrayBuffer());
     if (destPath) {
       fs.writeFileSync(destPath, buffer);
       return destPath;
     }
     return buffer;
+  }
+
+  /**
+   * Download a generated video, trying each available URL in order.
+   * The contribution download URL is preferred because it serves the raw file,
+   * while the lh3 CDN URL may be blocked or rate limited.
+   */
+  async downloadVideo(video, destPath = 'video.mp4', opts = {}) {
+    const candidates = [];
+    if (video.downloadUrl) candidates.push(video.downloadUrl);
+    if (video.url) candidates.push(video.url);
+    if (Array.isArray(video.urls)) candidates.push(...video.urls);
+
+    let lastError = null;
+    for (const url of candidates) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const out = await this.downloadFile(url, destPath, opts);
+          const size = fs.statSync(out).size;
+          if (size > 1000) return out;
+          lastError = new Error(`File too small (${size} bytes) from ${url.substring(0, 60)}`);
+        } catch (e) {
+          lastError = e;
+        }
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+    throw lastError || new Error('No video URL available');
   }
 
   async listGems({ includeHidden = false } = {}) {
