@@ -67,7 +67,9 @@ Video files use the same upload and StreamGenerate pipeline as images. The file 
 
 Video *generation* is a separate, asynchronous flow that requires an authenticated account with video generation entitlement.
 
-1. **Request** — a normal `StreamGenerate` call with a video-generation prompt. The response contains a placeholder:
+1. **Request** — a `StreamGenerate` call with a video-generation prompt, sent using the **Flash-Lite model hash** (`8c46e95b1a07cecc`) in `inner[79]`. The numeric `mode` aliases map to chat models and reject video prompts with *"Sorry, something went wrong"*.
+
+   The response contains a placeholder:
    > `I'm generating your video. This could take a few minutes, so check back to see when your video is ready.`
 
    The chat id is at `inner[1][0]` and the task id at `inner[2]["21"][0]`.
@@ -82,3 +84,14 @@ Video *generation* is a separate, asynchronous flow that requires an authenticat
    | `[11]` | MIME type (`video/mp4`) |
 
 3. **Download** — the download URL requires the same Google session cookie; without it the server redirects to the Google Accounts sign-in page. The CDN host does not support HTTP range requests, so a failed transfer cannot be resumed.
+
+### Model hashes
+
+The `otAQ7b` RPC returns the server-side model table. Model identifiers are hashes, not names:
+
+| Name | Hash |
+|------|------|
+| Flash-Lite | `8c46e95b1a07cecc` |
+| Flash | `56fdd199312815e2` |
+| Pro | `e6fa609c3fa255c0` |
+| Argon | `95a4c0abcba24364` |

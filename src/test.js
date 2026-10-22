@@ -3,7 +3,16 @@ import { GeminiClient } from './gemini.js';
 
 const client = new GeminiClient();
 
-console.log('Testing Gemini Unofficial API (no login)...\n');
+// Authenticate up front so logged-in features are exercised before the
+// guest-mode tests consume the request budget.
+if (process.env.COOKIE) {
+  await client.login(process.env.COOKIE);
+} else if (client.cookie) {
+  await client.init();
+}
+
+console.log('Testing Gemini Unofficial API');
+console.log('Logged in:', client.isLoggedIn, '\n');
 
 // Test 1: Basic message
 console.log('=== Test 1: Basic message ===');
@@ -169,13 +178,7 @@ try {
   console.log('Multi-account error:', e.message);
 }
 
-// Post-login features (auto-detected from cookies.json or COOKIE env var)
-if (process.env.COOKIE) {
-  await client.login(process.env.COOKIE);
-}
-if (client.cookie && !client.isLoggedIn) {
-  await client.init();
-}
+// Post-login features
 if (client.isLoggedIn) {
   console.log('\n=== Post-login features ===');
   console.log('Logged in:', client.isLoggedIn);
@@ -183,6 +186,12 @@ if (client.isLoggedIn) {
   console.log('\n--- listModels ---');
   const models = await client.listModels();
   console.log('Models:', models.slice(0, 5).map(m => m.name).join(', '));
+
+  console.log('\n--- getUsageInfo ---');
+  try {
+    const usage = await client.getUsageInfo();
+    console.log('Tier:', usage?.tier?.label, '| remaining:', usage?.items?.map(i => i.remaining).join(', '));
+  } catch (e) { console.log('Usage error:', e.message); }
 
   console.log('\n--- listChats ---');
   let chats = [];
@@ -253,6 +262,27 @@ if (client.isLoggedIn) {
     const memories = await client.listMemories();
     console.log('Memories:', memories.length);
   } catch (e) { console.log('Memories error:', e.message); }
+
+  console.log('\n--- generateVideo (Veo) ---');
+  if (process.env.VIDEO_TEST === '1') {
+    try {
+      const vid = await client.generateVideo('A green apple rolling on a white table, 4 seconds', {
+        timeout: 900000,
+        interval: 15000,
+      });
+      console.log('Ready:', vid.ready, '| chatId:', vid.chatId);
+      if (vid.ready && vid.videos.length) {
+        console.log('Video:', vid.videos[0].name, vid.videos[0].mime);
+        const out = await client.downloadVideo(vid.videos[0], 'test_generated_video.mp4', { timeout: 600000 });
+        console.log('Downloaded to:', out, fs.statSync(out).size, 'bytes');
+        fs.unlinkSync(out);
+      } else {
+        console.log('Status:', vid.text);
+      }
+    } catch (e) { console.log('Video generation error:', e.message); }
+  } else {
+    console.log('Skipped. Run with VIDEO_TEST=1 to enable (consumes Veo quota).');
+  }
 } else {
   console.log('\n=== Post-login (skipped) ===');
   console.log('Set cookies via:');

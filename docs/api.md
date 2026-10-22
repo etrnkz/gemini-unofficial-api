@@ -51,23 +51,38 @@ Generates a video with Google Veo through Gemini. Requires an authenticated acco
 
 | Opt | Type | Default | Description |
 |-----|------|---------|-------------|
-| `model` | `string` | `'gemini-3.1-pro'` | Model used for generation |
-| `timeout` | `number` | `600000` | Max milliseconds to wait |
+| `model` | `string` | `VIDEO_MODEL` (`8c46e95b1a07cecc`) | Model hash used for generation |
+| `timeout` | `number` | `900000` | Max milliseconds to wait |
 | `interval` | `number` | `15000` | Poll interval in milliseconds |
 
-Returns `{ready, chatId, text, videos, images}`. When `ready` is `true`, `videos[0]` contains `{url, downloadUrl, name, mime}`.
+Returns `{ready, chatId, text, videos, images}`. When `ready` is `true`, `videos[0]` contains `{url, downloadUrl, urls, name, mime}`.
 
 ```js
 const res = await client.generateVideo('A red ball bouncing on wood, 4 seconds');
 if (res.ready) {
-  console.log(res.videos[0].downloadUrl);
-  await client.downloadFile(res.videos[0].url, 'video.mp4');
+  await client.downloadVideo(res.videos[0], 'video.mp4');
 }
 ```
+
+> **Model routing matters.** Video prompts only trigger Veo when sent with the
+> **Flash-Lite model hash** (`8c46e95b1a07cecc`). The `MODELS` aliases
+> (`gemini-3.1-pro` etc.) resolve to chat models and answer video prompts with
+> *"Sorry, something went wrong"*. The server-side hashes are:
+
+| Name | Hash |
+|------|------|
+| Flash-Lite | `8c46e95b1a07cecc` |
+| Flash | `56fdd199312815e2` |
+| Pro | `e6fa609c3fa255c0` |
+| Argon | `95a4c0abcba24364` |
 
 ### `waitForVideo(chatId, opts?)`
 
 Polls an existing chat until a generated video becomes ready. Same options and return shape as `generateVideo`.
+
+### `downloadVideo(video, destPath?, opts?)`
+
+Downloads a generated video, trying each URL in order (download URL first, then the CDN URL) with retries. The download URL requires the same Google session cookie. The CDN host does not support HTTP range requests, so interrupted transfers cannot be resumed.
 
 ## Authentication
 
