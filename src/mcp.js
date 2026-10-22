@@ -100,6 +100,35 @@ const TOOLS = [
     },
   },
   {
+    name: 'gemini_generate_video',
+    description: 'Generate a video with Google Veo via Gemini. Requires an authenticated account with video generation entitlement. Takes a few minutes to complete; polls until ready.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Description of the video to generate',
+        },
+        model: {
+          type: 'string',
+          description: 'Gemini model to use for generation',
+          enum: Object.keys(MODELS),
+          default: 'gemini-3.1-pro',
+        },
+        timeout: {
+          type: 'number',
+          description: 'Max seconds to wait for the video (default 600)',
+          default: 600,
+        },
+        account: {
+          type: 'string',
+          description: 'Optional account name or index to use',
+        },
+      },
+      required: ['prompt'],
+    },
+  },
+  {
     name: 'gemini_list_accounts',
     description: 'List all loaded Google accounts, which one is currently active, and their login status.',
     inputSchema: {
@@ -289,6 +318,27 @@ async function executeTool(client, name, args) {
         const models = await client.listModels();
         return {
           content: [{ type: 'text', text: JSON.stringify(models, null, 2) }],
+          isError: false,
+        };
+      }
+
+      case 'gemini_generate_video': {
+        const { prompt, model = 'gemini-3.1-pro', timeout = 600 } = args;
+        if (!prompt) throw new Error('Missing required argument: prompt');
+        const res = await client.generateVideo(prompt, { model, timeout: timeout * 1000 });
+        if (!res.ready) {
+          return {
+            content: [{ type: 'text', text: `Video not ready yet. Chat ID: ${res.chatId}\n${res.text || ''}` }],
+            isError: false,
+          };
+        }
+        let out = `Video ready!\n\n${res.text || ''}\n`;
+        for (const v of res.videos) {
+          out += `\nFilename: ${v.name}\nMIME: ${v.mime}\nURL: ${v.url}\n`;
+          if (v.downloadUrl) out += `Download: ${v.downloadUrl}\n`;
+        }
+        return {
+          content: [{ type: 'text', text: out.trim() }],
           isError: false,
         };
       }

@@ -184,7 +184,7 @@ export class GeminiClient {
     return !!this._atToken;
   }
 
-  async init() {
+  async init(retries = 3) {
     const headers = {
       'User-Agent': UA,
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -192,14 +192,37 @@ export class GeminiClient {
     };
     if (this.cookie) headers['Cookie'] = this.cookie;
 
-    const res = await fetch(`${BASE}/`, { headers });
+    let html = '';
+    let lastError = null;
 
-    const rawCookies = res.headers.raw()['set-cookie'] || [];
-    if (!this.cookie) {
-      this.cookie = rawCookies.map(c => c.split(';')[0]).join('; ');
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, attempt * 2000));
+      }
+      try {
+        const res = await fetch(`${BASE}/`, { headers });
+
+        const rawCookies = res.headers.raw()['set-cookie'] || [];
+        if (!this.cookie) {
+          this.cookie = rawCookies.map(c => c.split(';')[0]).join('; ');
+        }
+
+        html = await res.text();
+
+        const atMatch = html.match(/"SNlM0e"\s*:\s*"(.*?)"/);
+        if (atMatch) {
+          this._atToken = atMatch[1];
+        }
+        break;
+      } catch (e) {
+        lastError = e;
+      }
     }
 
-    const html = await res.text();
+    if (!html) {
+      throw lastError || new Error('Failed to load Gemini homepage');
+    }
+
     const blMatch = html.match(/boq_assistant[\w.-]+/);
     this.bl = blMatch ? blMatch[0] : 'boq_assistant-bard-web-server_20260529.02_p0';
 
@@ -212,10 +235,6 @@ export class GeminiClient {
       }
     }
 
-    const atMatch = html.match(/"SNlM0e"\s*:\s*"(.*?)"/);
-    if (atMatch) {
-      this._atToken = atMatch[1];
-    }
     this._syncActiveAccount();
 
     return this;
@@ -354,7 +373,7 @@ export class GeminiClient {
     qp.append('bl', this.bl);
 
     const bp = new URLSearchParams();
-    bp.append('f.req', JSON.stringify([[rpcId, payload, null, 'generic']]));
+    bp.append('f.req', JSON.stringify([[[rpcId, payload, null, 'generic']]]));
     bp.append('at', this._atToken);
 
     const headers = {
@@ -369,7 +388,24 @@ export class GeminiClient {
     if (this.cookie) headers['Cookie'] = this.cookie;
 
     const url = `${BASE}/_/BardChatUi/data/batchexecute?${qp.toString()}`;
-    const res = await fetch(url, { method: 'POST', headers, body: bp.toString() });
+    const body = bp.toString();
+
+    let res = null;
+    let lastError = null;
+    for (let attempt = 0; attempt <= 2; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, attempt * 2000));
+      try {
+        res = await fetch(url, { method: 'POST', headers, body });
+        if (res.ok) break;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    if (!res) {
+      if (closeOnError) throw lastError || new Error('Batch exec failed: network error');
+      return '';
+    }
     if (!res.ok && closeOnError) throw new Error(`Batch exec failed: ${res.status}`);
     return this._stripFramePrefix(await res.text());
   }
@@ -634,6 +670,109 @@ export class GeminiClient {
 
   async *streamVideo(prompt, video, { model = 'gemini-3.5-flash' } = {}) {
     yield* this.streamWithFiles(prompt, [video], { model });
+  }
+
+  /**
+   * Generate a video with Google Veo via Gemini.
+   * Sends the prompt, then polls the chat until the video is ready.
+   * Requires an authenticated account with video generation entitlement.
+   */
+  async generateVideo(prompt, { model = 'gemini-3.1-pro', timeout = 600000, interval = 15000 } = {}) {
+    const cfg = MODELS[model];
+    if (!cfg) throw new Error(`Unknown model: ${model}`);
+    if (!this.bl) await this.init();
+    if (!this._atToken) throw new Error('Video generation requires login. Set cookies.json or call login(cookie).');
+
+    const raw = await this._request(prompt, cfg.mode, cfg.think);
+    const chatId = this._extractChatId(raw);
+    if (!chatId) throw new Error('Could not determine chat id for video generation');
+
+    const deadline = Date.now() + timeout;
+    let lastText = '';
+
+    while (Date.now() < deadline) {
+      const status = await this._pollVideoStatus(chatId);
+      if (status.ready) return status;
+      if (status.text) lastText = status.text;
+      await new Promise(r => setTimeout(r, interval));
+    }
+
+    return {
+      ready: false,
+      chatId,
+      text: lastText || 'Video generation timed out',
+      videos: [],
+      images: [],
+    };
+  }
+
+  _extractChatId(raw) {
+    for (const rawLine of raw.split('\n')) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith(')]}')) continue;
+      try {
+        const parsed = JSON.parse(line);
+        const innerStr = parsed[0]?.[2];
+        if (!innerStr || innerStr.length < 20) continue;
+        const inner = JSON.parse(innerStr);
+        // [null, ["c_xxx", "r_xxx"], {...}] -- chat id at inner[1][0]
+        const cid = inner?.[1]?.[0];
+        if (typeof cid === 'string' && cid.startsWith('c_')) return cid;
+      } catch { }
+    }
+    return null;
+  }
+
+  async _pollVideoStatus(chatId) {
+    const raw = await this._batchExec('hNvQHb', JSON.stringify([chatId, 10, null, 1, [1], [4], null, 1]));
+    const body = findWrbResult(raw, 'hNvQHb');
+
+    const videos = [];
+    const images = [];
+    let text = '';
+
+    // Video media lives at body[3][2][0][0][0][0][0]
+    const mediaRoot = body?.[3]?.[2]?.[0]?.[0]?.[0]?.[0]?.[0];
+    if (Array.isArray(mediaRoot)) {
+      const name = mediaRoot[2] || '';
+      const mime = mediaRoot[11] || '';
+      const urls = mediaRoot[7] || [];
+      const url = urls[0] || urls[1] || urls[2] || null;
+      const downloadUrl = urls[1] || null;
+      if (url && (mime.includes('video') || name.endsWith('.mp4'))) {
+        videos.push({ url, downloadUrl, name, mime });
+      }
+    }
+
+    // Conversation text
+    const turns = body?.[0];
+    if (Array.isArray(turns)) {
+      for (const turn of turns) {
+        const parts = turn?.[3];
+        if (!Array.isArray(parts)) continue;
+        for (const part of parts) {
+          if (Array.isArray(part?.[1])) {
+            for (const t of part[1]) {
+              if (typeof t === 'string' && t.length > 0) text = t;
+            }
+          }
+        }
+      }
+    }
+
+    return { ready: videos.length > 0, chatId, text, videos, images };
+  }
+
+  async waitForVideo(chatId, { timeout = 600000, interval = 15000 } = {}) {
+    const deadline = Date.now() + timeout;
+    let lastText = '';
+    while (Date.now() < deadline) {
+      const status = await this._pollVideoStatus(chatId);
+      if (status.ready) return status;
+      if (status.text) lastText = status.text;
+      await new Promise(r => setTimeout(r, interval));
+    }
+    return { ready: false, chatId, text: lastText, videos: [], images: [] };
   }
 
   async listModels() {
