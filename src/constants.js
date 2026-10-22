@@ -11,6 +11,20 @@ export const MODELS = {
   'gemini-flash-lite': { mode: 6, think: 4 },
 };
 
+// Model hashes reported by the `otAQ7b` RPC on the current Gemini build.
+export const MODEL_HASHES = {
+  'Flash-Lite': '8c46e95b1a07cecc',
+  'Flash': '56fdd199312815e2',
+  'Pro': 'e6fa609c3fa255c0',
+  'Argon': '95a4c0abcba24364',
+};
+
+// Video generation (Veo) is triggered through the Flash-Lite model hash.
+// The numeric `mode` aliases above resolve to chat models and return
+// "Sorry, something went wrong" for video prompts.
+export const VIDEO_MODEL = MODEL_HASHES['Flash-Lite'];
+
+
 export function parseWrb(raw) {
   if (typeof raw === 'string') {
     const idx = raw.indexOf('[["wrb.fr"');

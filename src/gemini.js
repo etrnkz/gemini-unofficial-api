@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import mime from 'mime-types';
-import { BASE, UPLOAD_URL, UA, MODELS, parseWrb, findWrbResult } from './constants.js';
+import { BASE, UPLOAD_URL, UA, MODELS, MODEL_HASHES, VIDEO_MODEL, parseWrb, findWrbResult } from './constants.js';
 
 export class GeminiClient {
   constructor({ cookie, accounts, cookiesFile, autoRotate = true } = {}) {
@@ -677,13 +677,19 @@ export class GeminiClient {
    * Sends the prompt, then polls the chat until the video is ready.
    * Requires an authenticated account with video generation entitlement.
    */
-  async generateVideo(prompt, { model = 'gemini-3.1-pro', timeout = 600000, interval = 15000 } = {}) {
-    const cfg = MODELS[model];
-    if (!cfg) throw new Error(`Unknown model: ${model}`);
+  async generateVideo(prompt, { model = VIDEO_MODEL, timeout = 900000, interval = 15000 } = {}) {
     if (!this.bl) await this.init();
     if (!this._atToken) throw new Error('Video generation requires login. Set cookies.json or call login(cookie).');
 
-    const raw = await this._request(prompt, cfg.mode, cfg.think);
+    // `model` may be a model hash (e.g. '8c46e95b1a07cecc') or a public alias.
+    let modelId = model;
+    let thinkMode = 4;
+    if (MODELS[model]) {
+      modelId = MODELS[model].mode;
+      thinkMode = MODELS[model].think;
+    }
+
+    const raw = await this._request(prompt, modelId, thinkMode);
     const chatId = this._extractChatId(raw);
     if (!chatId) throw new Error('Could not determine chat id for video generation');
 
@@ -693,7 +699,7 @@ export class GeminiClient {
     while (Date.now() < deadline) {
       const status = await this._pollVideoStatus(chatId);
       if (status.ready) return status;
-      if (status.text) lastText = status.text;
+      if (status.text && status.text !== 'video_generation') lastText = status.text;
       await new Promise(r => setTimeout(r, interval));
     }
 
@@ -757,6 +763,7 @@ export class GeminiClient {
       const downloadUrl = urls[1] || null;
       if (!url) continue;
       if (mime.includes('video') || name.endsWith('.mp4')) {
+        if (videos.some(v => v.url === url)) continue;
         videos.push({ url, downloadUrl, urls: urls.filter(Boolean), name, mime });
       }
     }
