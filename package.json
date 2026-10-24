@@ -26,5 +26,19 @@
     "google",
     "ai"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/etrnkz/gemini-unofficial-api.git"
+  },
+  "author": "etrnkz",
+  "files": [
+    "src",
+    "media",
+    "docs",
+    "opencode.json",
+    ".opencode",
+    "README.md",
+    "LICENSE"
+  ],
   "license": "MIT"
 }
