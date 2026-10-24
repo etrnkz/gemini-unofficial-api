@@ -1,4 +1,3 @@
 export { GeminiClient } from './gemini.js';
-export { startMcpServer, createMcpHandler } from './mcp.js';
-export { geminiPlugin } from './opencode-plugin.js';
+export { MODELS, MODEL_HASHES, VIDEO_MODEL } from './constants.js';
 export { default } from './gemini.js';

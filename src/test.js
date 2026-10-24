@@ -105,56 +105,8 @@ try {
   console.log('Download error:', e.message);
 }
 
-// Test 10: MCP Protocol
-console.log('\n=== Test 10: MCP Server Protocol ===');
-try {
-  const { createMcpHandler } = await import('./mcp.js');
-  const handler = createMcpHandler();
-
-  const initRes = await handler({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} });
-  console.log('MCP init server:', initRes.result.serverInfo.name);
-
-  const toolsRes = await handler({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} });
-  console.log('MCP tools count:', toolsRes.result.tools.length);
-  console.log('MCP tools:', toolsRes.result.tools.map(t => t.name).join(', '));
-
-  const modelsCall = await handler({
-    jsonrpc: '2.0',
-    id: 3,
-    method: 'tools/call',
-    params: { name: 'gemini_list_models', arguments: {} }
-  });
-  console.log('MCP tool call (models):', modelsCall.result.isError ? 'FAIL' : 'OK');
-
-  const askCall = await handler({
-    jsonrpc: '2.0',
-    id: 4,
-    method: 'tools/call',
-    params: { name: 'gemini_ask', arguments: { prompt: 'Reply with the word PONG' } }
-  });
-  console.log('MCP tool call (ask):', askCall.result.content[0].text.substring(0, 80));
-
-  const downloadCall = await handler({
-    jsonrpc: '2.0',
-    id: 5,
-    method: 'tools/call',
-    params: { name: 'gemini_download_file', arguments: { url: 'https://www.google.com/favicon.ico' } }
-  });
-  console.log('MCP tool call (download):', downloadCall.result.content[0].text.substring(0, 80));
-
-  const accountsCall = await handler({
-    jsonrpc: '2.0',
-    id: 6,
-    method: 'tools/call',
-    params: { name: 'gemini_list_accounts', arguments: {} }
-  });
-  console.log('MCP tool call (accounts):', accountsCall.result.isError ? 'FAIL' : 'OK');
-} catch (e) {
-  console.log('MCP error:', e.message);
-}
-
-// Test 11: Multi-Account Management
-console.log('\n=== Test 11: Multi-Account Management ===');
+// Test 10: Multi-Account Management
+console.log('\n=== Test 10: Multi-Account Management ===');
 try {
   const multi = new GeminiClient({
     cookiesFile: false,

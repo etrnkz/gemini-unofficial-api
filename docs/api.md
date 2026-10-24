@@ -179,26 +179,3 @@ Get the full-resolution URL for a generated image. Returns URL string or `null`.
 |--------|---------|
 | `getDeepResearchCaps()` | raw response |
 | `deepResearchBootstrap()` | raw response |
-
-## Model Context Protocol (MCP)
-
-### `startMcpServer(options?)`
-
-Starts the Model Context Protocol stdio server for AI agents and editors.
-
-### `createMcpHandler(clientOptions?)`
-
-Returns an async function `handleMessage(jsonRpcMessage)` to handle JSON-RPC 2.0 messages programmatically.
-
-### MCP Tools
-
-| Tool | Parameters | Description |
-|------|------------|-------------|
-| `gemini_ask` | `prompt` (string), `model` (optional string) | Sends text prompt to Gemini |
-| `gemini_ask_with_file` | `prompt` (string), `filePath` (string), `model` (optional string) | Sends prompt with uploaded file attachment |
-| `gemini_upload_file` | `filePath` (string) | Uploads file to CDN and returns file ID |
-| `gemini_download_file` | `url` (string), `destPath` (optional string) | Downloads a remote file/image to buffer or disk |
-| `gemini_list_models` | none | Lists supported models with details |
-| `gemini_generate_video` | `prompt` (string), `model` (optional), `timeout` (optional) | Generates a video with Veo and polls until ready |
-| `gemini_list_accounts` | none | Lists all loaded accounts and active status |
-| `gemini_switch_account` | `account` (string) | Switches active account by name or index |

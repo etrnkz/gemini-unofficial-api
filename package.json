@@ -1,16 +1,14 @@
 {
   "name": "gemini-unofficial-api",
   "version": "1.0.0",
-  "description": "Unofficial Google Gemini API client with MCP server - no login required",
+  "description": "Unofficial reverse-engineered Google Gemini API client with Google Veo video generation - no login required for text & images",
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "gemini": "src/cli.js",
-    "gemini-mcp": "src/mcp.js"
+    "gemini": "src/cli.js"
   },
   "scripts": {
     "start": "node --max-http-header-size=65536 src/cli.js",
-    "mcp": "node --max-http-header-size=65536 src/mcp.js",
     "test": "node --max-http-header-size=65536 src/test.js"
   },
   "dependencies": {
@@ -19,12 +17,12 @@
   },
   "keywords": [
     "gemini",
-    "mcp",
-    "mcp-server",
-    "model-context-protocol",
-    "bard",
-    "google",
-    "ai"
+    "google-gemini",
+    "gemini-api",
+    "reverse-engineered",
+    "veo",
+    "video-generation",
+    "google-ai"
   ],
   "repository": {
     "type": "git",
@@ -35,8 +33,6 @@
     "src",
     "media",
     "docs",
-    "opencode.json",
-    ".opencode",
     "README.md",
     "LICENSE"
   ],

@@ -142,55 +142,23 @@ console.log(result.text, result.images);
 const buffer = await client.downloadFile('https://lh3.googleusercontent.com/...');
 ```
 
-## Model Context Protocol (MCP) Server
+## Video Generation (Google Veo)
 
-You can run Gemini as an MCP server over standard I/O for Claude Desktop, Cursor, OpenCode, or any MCP client:
-
-### Running directly
-
-```sh
-# Run via CLI
-node src/mcp.js
-
-# Or via npm
-npm run mcp
-```
-
-### Claude Desktop Setup
-
-In `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "gemini": {
-      "command": "node",
-      "args": ["--max-http-header-size=65536", "/path/to/gemini-unofficial-api/src/mcp.js"]
-    }
-  }
-}
-```
-
-### Programmatic MCP Handler
+Generate 720p 24fps videos with Google Veo via Gemini (requires an authenticated account with Veo entitlement):
 
 ```js
-import { createMcpHandler, startMcpServer } from 'gemini-unofficial-api';
+// Starts generation, polls the chat until ready, and returns video metadata
+const res = await client.generateVideo('A red ball bouncing on wood, 4 seconds');
 
-// Start server on stdio
-startMcpServer();
+if (res.ready) {
+  console.log('Video ready! Chat ID:', res.chatId);
 
-// Or handle JSON-RPC messages programmatically
-const handler = createMcpHandler();
-const res = await handler({
-  jsonrpc: '2.0',
-  id: 1,
-  method: 'tools/call',
-  params: {
-    name: 'gemini_ask',
-    arguments: { prompt: 'Explain quantum computing in simple terms' }
-  }
-});
-console.log(res.result.content[0].text);
+  // Download directly to disk
+  await client.downloadVideo(res.videos[0], 'output.mp4');
+}
+
+// Or poll an existing chat ID
+const status = await client.waitForVideo('c_1f6980cd535d9775');
 ```
 
 ## Constructor options

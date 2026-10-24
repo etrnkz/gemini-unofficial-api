@@ -293,7 +293,7 @@ export class GeminiClient {
     }
   }
 
-  async _doRequest(prompt, modelId, thinkMode, files = null) {
+  async _doRequest(prompt, modelId, thinkMode, files = null, timeout = 60000) {
     const reqId = ++this.reqId;
     const body = this._buildPayload(prompt, modelId, thinkMode, files);
     const url = `${BASE}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${this.bl}&hl=en&_reqid=${reqId}&rt=c`;
@@ -309,11 +309,17 @@ export class GeminiClient {
       headers['Cookie'] = this.cookie;
     }
 
-    const res = await fetch(url, { method: 'POST', headers, body });
-    return res.text();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    try {
+      const res = await fetch(url, { method: 'POST', headers, body, signal: controller.signal });
+      return await res.text();
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
-  async _doStreamRequest(prompt, modelId, thinkMode, files = null) {
+  async _doStreamRequest(prompt, modelId, thinkMode, files = null, timeout = 60000) {
     const reqId = ++this.reqId;
     const body = this._buildPayload(prompt, modelId, thinkMode, files);
     const url = `${BASE}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${this.bl}&hl=en&_reqid=${reqId}&rt=c`;
@@ -325,10 +331,18 @@ export class GeminiClient {
       'X-Same-Domain': '1',
       'User-Agent': UA,
     };
-    if (this.cookie) headers['Cookie'] = this.cookie;
+    if (this.cookie) {
+      headers['Cookie'] = this.cookie;
+    }
 
-    const res = await fetch(url, { method: 'POST', headers, body });
-    return res.text();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    try {
+      const res = await fetch(url, { method: 'POST', headers, body, signal: controller.signal });
+      return await res.text();
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async _upload(fileContent, fileName, contentType) {

@@ -6,14 +6,12 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node 18+">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
   <img src="https://img.shields.io/badge/dependencies-2-lightgrey" alt="2 deps">
-  <img src="https://img.shields.io/badge/MCP-server-purple" alt="MCP Server">
   <img src="https://img.shields.io/badge/status-active-success" alt="Active">
   <img src="https://img.shields.io/badge/PRs-welcome-8A2BE2" alt="PRs Welcome">
 </p>
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
-  <a href="#mcp-server">MCP Server</a> •
   <a href="docs/guide.md">Guide</a> •
   <a href="docs/api.md">API</a> •
   <a href="docs/protocol.md">Protocol</a>
@@ -22,9 +20,9 @@
 ---
 
 <p align="center">
-  <strong>Unofficial Node.js client and MCP server for Google Gemini</strong>
+  <strong>Unofficial reverse-engineered Node.js client for Google Gemini</strong>
   <br>
-  No login required for text & images — cookies unlock the full suite.
+  No login required for text & images — cookies unlock Google Veo video generation and the full account suite.
   <br>
   Drop a <code>cookies.json</code> and use.
 </p>
@@ -55,61 +53,23 @@ console.log(answer);
 | Chat | `sendMessage`, `streamMessage` | none |
 | Images | `sendImage`, `streamImage` | none |
 | Files | `uploadFile`, `uploadBuffer`, `sendMessageWithFiles` | none |
-| Video | `sendVideo`, `streamVideo` | cookie |
-| Video gen | `generateVideo`, `waitForVideo` | cookie |
+| Video analysis | `sendVideo`, `streamVideo` | none |
+| Video generation | `generateVideo`, `waitForVideo`, `downloadVideo` | cookie |
 | Accounts | `listAccounts`, `useAccount`, `rotateAccount`, `addAccount` | optional |
-| MCP | `gemini_ask`, `gemini_ask_with_file`, `gemini_upload_file`, `gemini_download_file`, `gemini_list_models`, `gemini_list_accounts`, `gemini_switch_account` | optional |
 | Chats | `listChats`, `readChat`, `deleteChat`, `renameChat`, `generateChatTitle` | cookie |
 | Gems | `listGems`, `createGem`, `updateGem`, `deleteGem` | cookie |
 | Memory | `listMemories`, `createMemory`, `updateMemory`, `deleteMemory`, `deleteAllMemories` | cookie |
 | Account | `listModels`, `getAccountStatus`, `getSettings`, `getUsageInfo`, `checkQuota` | optional |
 | Research | `getDeepResearchCaps`, `deepResearchBootstrap` | cookie |
-| Media | `downloadFile`, `getFullSizeImage` | cookie |
-
-## MCP Server
-
-Run Gemini as an MCP (Model Context Protocol) server over stdio for Claude Desktop, Cursor, OpenCode, or any MCP host:
-
-```sh
-# Start via CLI command
-npx gemini-unofficial-api mcp
-
-# Or via npm script
-npm run mcp
-```
-
-### Claude Desktop Configuration
-
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "gemini": {
-      "command": "node",
-      "args": ["--max-http-header-size=65536", "/path/to/gemini-unofficial-api/src/mcp.js"]
-    }
-  }
-}
-```
-
-### Available MCP Tools
-
-- **`gemini_ask`**: Ask questions or generate text/code with any Gemini model
-- **`gemini_ask_with_file`**: Inspect local files (images, PDFs, videos, code, audio)
-- **`gemini_upload_file`**: Upload a file to Google CDN storage and get a file ID
-- **`gemini_download_file`**: Download any remote file or image to disk or buffer
-- **`gemini_list_models`**: View all supported models and capabilities
-- **`gemini_list_accounts`**: View all loaded accounts and their active/login status
-- **`gemini_switch_account`**: Switch the active account on the fly
+| Media | `downloadFile`, `getFullSizeImage` | optional |
 
 ## Docs
 
 | | |
 |---|---|
-| <img src="media/icon.svg" width="18" align="center"> [Guide](docs/guide.md) | Step-by-step usage: guest mode, login, file/video ops, constructor options |
-| <img src="media/icon.svg" width="18" align="center"> [API Reference](docs/api.md) | Full docs for all 30+ methods with parameters and return types |
-| <img src="media/icon.svg" width="18" align="center"> [Protocol](docs/protocol.md) | How the protocol works under the hood |
+| <img src="media/icon.svg" width="18" align="center"> [Guide](docs/guide.md) | Step-by-step usage: guest mode, login, file/video ops, Veo video generation, multi-account |
+| <img src="media/icon.svg" width="18" align="center"> [API Reference](docs/api.md) | Full docs for all methods with parameters and return types |
+| <img src="media/icon.svg" width="18" align="center"> [Protocol](docs/protocol.md) | How the reverse-engineered protocol works under the hood |
 
 ## License
 
