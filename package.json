@@ -5,8 +5,8 @@
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "gemini": "./src/cli.js",
-    "gemini-mcp": "./src/mcp.js"
+    "gemini": "src/cli.js",
+    "gemini-mcp": "src/mcp.js"
   },
   "scripts": {
     "start": "node --max-http-header-size=65536 src/cli.js",
