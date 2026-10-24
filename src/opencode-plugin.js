@@ -102,6 +102,78 @@ export async function geminiPlugin({ client: opencodeClient, project, directory,
         },
       },
 
+      gemini_generate_video: {
+        description: 'Generate a video with Google Veo via Gemini. Requires an authenticated account with video generation entitlement. Automatically polls until ready and can save to disk.',
+        parameters: {
+          type: 'object',
+          properties: {
+            prompt: {
+              type: 'string',
+              description: 'Description of the video to generate',
+            },
+            destPath: {
+              type: 'string',
+              description: 'Optional file path to save the generated MP4 to (e.g. video.mp4)',
+            },
+            timeout: {
+              type: 'number',
+              description: 'Max seconds to wait for video generation (default 900)',
+            },
+            account: {
+              type: 'string',
+              description: 'Optional account name or index to use',
+            },
+          },
+          required: ['prompt'],
+        },
+        execute: async (args) => {
+          if (args.account) gemini.useAccount(args.account);
+          const res = await gemini.generateVideo(args.prompt, {
+            timeout: (args.timeout || 900) * 1000,
+          });
+          if (!res.ready) {
+            return `Video generation in progress or timed out. Chat ID: ${res.chatId}\n${res.text || ''}`;
+          }
+          let out = `Video is ready!\nChat ID: ${res.chatId}\n`;
+          if (args.destPath && res.videos.length > 0) {
+            try {
+              const savedPath = await gemini.downloadVideo(res.videos[0], args.destPath);
+              out += `\nSaved video to: ${savedPath} (${fs.statSync(savedPath).size} bytes)\n`;
+            } catch (e) {
+              out += `\nFailed to download video to ${args.destPath}: ${e.message}\n`;
+            }
+          }
+          for (const v of res.videos) {
+            out += `\n- ${v.name} (${v.mime})\n  URL: ${v.url}\n`;
+            if (v.downloadUrl) out += `  Download: ${v.downloadUrl}\n`;
+          }
+          return out.trim();
+        },
+      },
+
+      gemini_download_file: {
+        description: 'Download a remote file or media from a URL and save it to disk.',
+        parameters: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              description: 'URL of the file or image to download',
+            },
+            destPath: {
+              type: 'string',
+              description: 'Local file path to save the file to',
+            },
+          },
+          required: ['url', 'destPath'],
+        },
+        execute: async (args) => {
+          const saved = await gemini.downloadFile(args.url, path.resolve(args.destPath));
+          const size = fs.statSync(saved).size;
+          return `Downloaded ${size} bytes to ${saved}`;
+        },
+      },
+
       gemini_switch_account: {
         description: 'Switch the active account by name or index.',
         parameters: {
