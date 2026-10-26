@@ -1,5 +1,5 @@
 {
-  "name": "gemini-unofficial-api",
+  "name": "@etrnkz/gemini-api",
   "version": "1.0.0",
   "description": "Unofficial reverse-engineered Google Gemini API client with Google Veo video generation - no login required for text & images",
   "type": "module",
