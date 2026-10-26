@@ -1,5 +1,11 @@
 <p align="center">
-  <img src="media/banner.svg" alt="Gemini Unofficial API">
+<pre align="center">
+ ████ █████ █   █ ███ █   █ ███      ███  ████  ███ 
+█     █     ██ ██  █  ██  █  █      █   █ █   █  █  
+█  ██ ████  █ █ █  █  █ █ █  █      █████ ████   █  
+█   █ █     █   █  █  █  ██  █      █   █ █      █  
+ ████ █████ █   █ ███ █   █ ███     █   █ █     ███ 
+</pre>
 </p>
 
 <p align="center">
