@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import mime from 'mime-types';
-import { BASE, UPLOAD_URL, UA, MODELS, MODEL_HASHES, VIDEO_MODEL, parseWrb, findWrbResult } from './constants.js';
+import { BASE, UPLOAD_URL, UA, DEFAULT_BUILD_LABEL, MODELS, MODEL_HASHES, VIDEO_MODEL, parseWrb, findWrbResult } from './constants.js';
 
 export class GeminiClient {
   constructor({ cookie, accounts, cookiesFile, autoRotate = true } = {}) {
@@ -185,6 +185,12 @@ export class GeminiClient {
   }
 
   async init(retries = 3) {
+    if (!this.cookie) {
+      this.bl = this.bl || DEFAULT_BUILD_LABEL;
+      this._syncActiveAccount();
+      return this;
+    }
+
     const headers = {
       'User-Agent': UA,
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -220,11 +226,13 @@ export class GeminiClient {
     }
 
     if (!html) {
-      throw lastError || new Error('Failed to load Gemini homepage');
+      this.bl = this.bl || DEFAULT_BUILD_LABEL;
+      this._syncActiveAccount();
+      return this;
     }
 
-    const blMatch = html.match(/boq_assistant[\w.-]+/);
-    this.bl = blMatch ? blMatch[0] : 'boq_assistant-bard-web-server_20260529.02_p0';
+    const blMatch = html.match(/cfb2h["']?\s*:\s*["']([^"']+)["']/) || html.match(/boq_assistant[\w.-]+/);
+    this.bl = blMatch ? (blMatch[1] || blMatch[0]) : (this.bl || DEFAULT_BUILD_LABEL);
 
     const pushIdx = html.indexOf('feeds/mcud');
     if (pushIdx > -1) {

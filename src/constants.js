@@ -1,6 +1,7 @@
 export const BASE = 'https://gemini.google.com';
 export const UPLOAD_URL = 'https://content-push.googleapis.com/upload';
 export const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
+export const DEFAULT_BUILD_LABEL = 'boq_gemini-web-uiserver_20261112.15_p0';
 
 export const MODELS = {
   'gemini-3.5-flash': { mode: 1, think: 4 },
